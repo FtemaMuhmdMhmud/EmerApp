@@ -1,0 +1,160 @@
+{% extends "layout.html" %}
+
+{% block title %}Emergency Evaluation Result - EmerApp{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <span class="badge bg-secondary">Case #{{ case_id }}</span>
+            <h2 class="h4 mb-0 text-dark">Clinical Triage & Action Report</h2>
+        </div>
+        <div>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm me-2">
+                <i class="bi bi-plus-circle me-1"></i> New Patient
+            </a>
+            <a href="{{ url_for('history') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-clock-history me-1"></i> Emergency Logbook
+            </a>
+        </div>
+    </div>
+
+    {% set bg_class = 'bg-danger text-white' if summary.triage_color == 'RED' else ('bg-warning text-dark' if summary.triage_color == 'YELLOW' else 'bg-success text-white') %}
+    {% set badge_text = 'CODE RED - RESUSCITATION' if summary.triage_color == 'RED' else ('CODE YELLOW - URGENT' if summary.triage_color == 'YELLOW' else 'CODE GREEN - NON-URGENT') %}
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header py-3 {{ bg_class }}">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="h5 mb-0 fw-bold tracking-wide">{{ badge_text }}</h3>
+                <span class="badge bg-light text-dark px-3 py-2 fw-bold">Shock Index: {{ summary.shock_index }}</span>
+            </div>
+        </div>
+        <div class="card-body bg-light">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Patient Name</small>
+                    <strong class="fs-6 text-dark">{{ patient_name }}</strong>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Demographics</small>
+                    <strong class="fs-6 text-dark">{{ age }} yrs | {{ gender }}</strong>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Dominant Path Reached</small>
+                    <strong class="fs-6 text-dark">{{ summary.step_reached }}</strong>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Hemodynamic Status</small>
+                    {% if summary.shock_index >= 1.0 %}
+                        <span class="badge bg-danger">Severe Shock State</span>
+                    {% elif summary.shock_index >= 0.7 %}
+                        <span class="badge bg-warning text-dark">Borderline Hypoperfusion</span>
+                    {% else %}
+                        <span class="badge bg-success">Normal Perfusion</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h4 class="h6 mb-0 fw-bold text-primary">
+                        <i class="bi bi-heart-pulse-fill me-2"></i>Immediate Resuscitation & Action Directives
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if summary.action_plan %}
+                        <ol class="list-group list-group-numbered list-group-flush">
+                            {% for action in summary.action_plan %}
+                                <li class="list-group-item px-0 py-3 border-bottom d-flex align-items-start">
+                                    <div class="ms-2 me-auto">
+                                        <div class="fw-semibold text-dark">{{ action }}</div>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ol>
+                    {% else %}
+                        <div class="alert alert-secondary mb-0">No emergent procedural alerts logged. Maintain baseline monitoring.</div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-white border-top py-2">
+                    <small class="text-muted"><i class="bi bi-shield-check me-1"></i> Continuous reassessment of airway and vitals is indicated.</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h4 class="h6 mb-0 fw-bold text-secondary">
+                        <i class="bi bi-diagram-3-fill me-2"></i>Exclusion Ladder Audit
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">Sequential audit of acute fatal pathology exclusions:</p>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2 pb-2 border-bottom d-flex justify-content-between align-items-center">
+                            <span class="small">1. Crash / Arrest / ABC Triage</span>
+                            {% if summary.triage_color == 'RED' and 'Arrest' in summary.step_reached %}
+                                <span class="badge bg-danger">Critical Intercept</span>
+                            {% else %}
+                                <span class="badge bg-light text-secondary border">Cleared</span>
+                            {% endif %}
+                        </li>
+                        <li class="mb-2 pb-2 border-bottom d-flex justify-content-between align-items-center">
+                            <span class="small">2. Trauma & Burn Resuscitation</span>
+                            {% if 'Burn' in summary.step_reached or 'Trauma' in summary.step_reached %}
+                                <span class="badge bg-danger">Active Protocol</span>
+                            {% else %}
+                                <span class="badge bg-light text-secondary border">Excluded</span>
+                            {% endif %}
+                        </li>
+                        <li class="mb-2 pb-2 border-bottom d-flex justify-content-between align-items-center">
+                            <span class="small">3. Coronary Ladder (ACS)</span>
+                            {% if 'Coronary' in summary.step_reached %}
+                                <span class="badge bg-warning text-dark">Active Pathway</span>
+                            {% else %}
+                                <span class="badge bg-light text-secondary border">Excluded / Low Risk</span>
+                            {% endif %}
+                        </li>
+                        <li class="mb-2 pb-2 border-bottom d-flex justify-content-between align-items-center">
+                            <span class="small">4. Pulmonary Ladder (PE)</span>
+                            {% if 'Pulmonary Embolism' in summary.step_reached %}
+                                <span class="badge bg-warning text-dark">Active Pathway</span>
+                            {% else %}
+                                <span class="badge bg-light text-secondary border">Excluded / Unlikely</span>
+                            {% endif %}
+                        </li>
+                        <li class="d-flex justify-content-between align-items-center">
+                            <span class="small">5. Toxicology & Metabolic</span>
+                            {% if 'Toxicology' in summary.step_reached %}
+                                <span class="badge bg-info text-dark">Active Pathway</span>
+                            {% else %}
+                                <span class="badge bg-light text-secondary border">Standby</span>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            {% if summary.critical_alerts %}
+                <div class="card border-warning shadow-sm">
+                    <div class="card-header bg-warning-subtle py-2">
+                        <strong class="small text-warning-emphasis"><i class="bi bi-exclamation-triangle-fill me-1"></i> Intermediate Diagnostic Findings</strong>
+                    </div>
+                    <div class="card-body py-2">
+                        <ul class="list-unstyled mb-0 small">
+                            {% for alert in summary.critical_alerts %}
+                                <li class="py-1 text-secondary"><i class="bi bi-arrow-right-short text-warning"></i> {{ alert }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

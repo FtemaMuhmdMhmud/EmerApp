@@ -1,0 +1,229 @@
+{% extends "layout.html" %}
+
+{% block title %}Emergency Admission & Triage - EmerApp{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white py-3">
+                    <h3 class="h5 mb-0 fw-bold"><i class="bi bi-clipboard2-pulse me-2"></i>Patient Intake & Exclusion Ladder Assessment</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{{ url_for('evaluate') }}" method="POST">
+
+                        <!-- 1. البيانات التعريفية -->
+                        <h5 class="text-secondary border-bottom pb-2 mb-3">1. Patient Identification</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Patient Name / MRN</label>
+                                <input type="text" name="patient_name" class="form-control" placeholder="e.g. John Doe" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Age (Years)</label>
+                                <input type="number" name="age" class="form-control" value="45" min="1" max="120" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Biological Sex</label>
+                                <select name="gender" class="form-select">
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 2. العلامات الحيوية وحالة الإنعاش (ABC Check) -->
+                        <h5 class="text-danger border-bottom pb-2 mb-3">2. Vital Signs & Rapid ABC Assessment</h5>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-2">
+                                <label class="form-label">HR (bpm)</label>
+                                <input type="number" name="hr" class="form-control" value="85" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Systolic BP (mmHg)</label>
+                                <input type="number" name="sbp" class="form-control" value="120" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">RR (/min)</label>
+                                <input type="number" name="rr" class="form-control" value="16" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">SpO2 (%)</label>
+                                <input type="number" name="spo2" class="form-control" value="98" min="50" max="100" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">GCS (3-15)</label>
+                                <input type="number" name="gcs" class="form-control" value="15" min="3" max="15" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4 p-3 bg-light rounded border">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="arrest" value="yes" id="arrestSwitch">
+                                    <label class="form-check-label fw-bold text-danger" for="arrestSwitch">Active Cardiac / Respiratory Arrest</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="bleeding" value="yes" id="bleedingSwitch">
+                                    <label class="form-check-label fw-bold text-danger" for="bleedingSwitch">Active Exsanguinating / Massive Hemorrhage</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. مسار الحوادث والحروق -->
+                        <h5 class="text-secondary border-bottom pb-2 mb-3">3. Trauma & Burn Screener</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_trauma" value="yes" id="traumaCheck">
+                                    <label class="form-check-label" for="traumaCheck">Acute Polytrauma / Major Injury</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_burns" value="yes" id="burnCheck">
+                                    <label class="form-check-label" for="burnCheck">Significant Thermal Burns</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" name="weight" class="form-control form-control-sm" placeholder="Weight (kg)" value="70">
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" name="tbsa" class="form-control form-control-sm" placeholder="TBSA Burn %" value="0">
+                            </div>
+                        </div>
+
+                        <!-- 4. مسار جلطات القلب (HEART Score) -->
+                        <h5 class="text-secondary border-bottom pb-2 mb-3">4. Acute Chest Pain / Coronary Screener (HEART Score)</h5>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_chest_pain" value="yes" id="chestPainCheck">
+                                <label class="form-check-label fw-bold" for="chestPainCheck">Patient presents with Acute Chest Discomfort</label>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-4 bg-light p-3 rounded">
+                            <div class="col-md-4">
+                                <label class="form-label">History Suspicion</label>
+                                <select name="heart_h" class="form-select form-select-sm">
+                                    <option value="0">Slightly suspicious (0)</option>
+                                    <option value="1">Moderately suspicious (1)</option>
+                                    <option value="2">Highly suspicious (2)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">ECG Findings</label>
+                                <select name="heart_e" class="form-select form-select-sm">
+                                    <option value="0">Normal (0)</option>
+                                    <option value="1">Non-specific repolarization (1)</option>
+                                    <option value="2">Significant ST-depression (2)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Age Risk</label>
+                                <select name="heart_a" class="form-select form-select-sm">
+                                    <option value="0">&lt; 45 years (0)</option>
+                                    <option value="1">45-64 years (1)</option>
+                                    <option value="2">&ge; 65 years (2)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mt-2">
+                                <label class="form-label">Risk Factors (HTN, DM, Smoking, Lipid, Family Hx)</label>
+                                <select name="heart_r" class="form-select form-select-sm">
+                                    <option value="0">No known risk factors (0)</option>
+                                    <option value="1">1-2 risk factors (1)</option>
+                                    <option value="2">&ge; 3 risk factors or atherosclerotic disease (2)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mt-2">
+                                <label class="form-label">Initial Troponin</label>
+                                <select name="heart_t" class="form-select form-select-sm">
+                                    <option value="0">&le; Normal limit (0)</option>
+                                    <option value="1">1-2x Normal limit (1)</option>
+                                    <option value="2">&gt; 2x Normal limit (2)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 5. مسار استبعاد الجلطة الرئوية (Wells' PE) -->
+                        <h5 class="text-secondary border-bottom pb-2 mb-3">5. Acute Dyspnea / PE Screener (Wells' Criteria)</h5>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_dyspnea" value="yes" id="dyspneaCheck">
+                                <label class="form-check-label fw-bold" for="dyspneaCheck">Patient presents with Acute Dyspnea / Suspected PE</label>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-4 bg-light p-3 rounded">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="wells_dvt" value="yes" id="wdvt">
+                                    <label class="form-check-label small" for="wdvt">Clinical signs of DVT (+3.0)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="wells_pe_first" value="yes" id="wpef">
+                                    <label class="form-check-label small" for="wpef">PE is #1 or equally likely (+3.0)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="wells_immob" value="yes" id="wimm">
+                                    <label class="form-check-label small" for="wimm">Immobilization &ge;3d / Surgery &le;4w (+1.5)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="wells_prior" value="yes" id="wprior">
+                                    <label class="form-check-label small" for="wprior">Previous DVT or PE (+1.5)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="wells_hemoptysis" value="yes" id="whemo">
+                                    <label class="form-check-label small" for="whemo">Hemoptysis (+1.0)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="wells_cancer" value="yes" id="wcanc">
+                                    <label class="form-check-label small" for="wcanc">Malignancy active &le;6m (+1.0)</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 6. مسار التسمم وفحص العين والجلد -->
+                        <h5 class="text-secondary border-bottom pb-2 mb-3">6. Toxicology & Mental Status Features</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Pupil Size / Reaction</label>
+                                <select name="pupils" class="form-select">
+                                    <option value="normal">Normal Reactive (3-4 mm)</option>
+                                    <option value="pinpoint">Pinpoint Miosis (&lt; 2 mm)</option>
+                                    <option value="dilated">Mydriasis / Dilated (&gt; 5 mm)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Skin Examination</label>
+                                <select name="skin" class="form-select">
+                                    <option value="normal">Normal / Warm</option>
+                                    <option value="sweaty">Diaphoretic / Profusely Sweaty</option>
+                                    <option value="dry">Anhidrotic / Warm &amp; Dry</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 pt-2">
+                            <button type="submit" class="btn btn-danger btn-lg py-3 fw-bold">
+                                <i class="bi bi-lightning-charge-fill me-2"></i>Execute Emergency Triage &amp; Action Plan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
